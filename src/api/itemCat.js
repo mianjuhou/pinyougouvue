@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-const group_name = 'specification'
+const group_name = 'itemCat'
 export default {
   save(pojo) {
     return request({
@@ -22,15 +22,15 @@ export default {
       data: pojo
     })
   },
-  findAll() {
-    return request({
-      url: `/${group_name}`,
-      method: 'get'
-    })
-  },
   findById(id) {
     return request({
       url: `/${group_name}/${id}`,
+      method: 'get'
+    })
+  },
+  findAll() {
+    return request({
+      url: `/${group_name}`,
       method: 'get'
     })
   },
@@ -43,26 +43,10 @@ export default {
       method: 'post',
       data: pojo
     })
-  },
-  saveAll(pojo) {
-    console.log(JSON.stringify(pojo));
+  },//级联删除多ID
+  deleteCascadeByIds(ids) {
     return request({
-      url: `/${group_name}/saveAll`,
-      method: 'post',
-      data: pojo
-    })
-  },
-  updateAll(id, pojo) {
-    console.log(JSON.stringify(pojo));
-    return request({
-      url: `/${group_name}/updateAll/${id}`,
-      method: 'put',
-      data: pojo
-    })
-  },
-  deleteAll(ids) {//根据多个ID删除数据
-    return request({
-      url: `/${group_name}/deleteAll`,
+      url: `/${group_name}/ids/cascade`,
       method: 'delete',
       data: ids
     })

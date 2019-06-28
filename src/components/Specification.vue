@@ -9,7 +9,7 @@
           <el-button-group>
             <el-button size="mini" @click="handleCreate">新建</el-button>
             <el-button size="mini" @click="handleDelete">删除</el-button>
-            <el-button size="mini">刷新</el-button>
+            <el-button size="mini" @click="handleRefresh">刷新</el-button>
           </el-button-group>
         </el-col>
         <el-col :span="12" style="text-align: right">
@@ -32,7 +32,7 @@
         <el-table-column
           label="规格名称"
           align="center"
-          prop="spec_name"></el-table-column>
+          prop="specName"></el-table-column>
         <el-table-column label="操作" align="center">
           <template slot-scope="scope">
             <el-button size="mini" @click="handleEdit(scope.$index, scope.row)" type="success">修改</el-button>
@@ -58,7 +58,7 @@
         <el-row>
           <el-col :span="6">规格名称</el-col>
           <el-col :span="18">
-            <el-input v-model="currentSpecData.spec_name" placeholder="规格名称" size="small"></el-input>
+            <el-input v-model="currentSpecData.specName" placeholder="规格名称" size="small"></el-input>
           </el-col>
         </el-row>
         <el-button style="margin-top: 10px;" size="small" @click="handlOptionAdd">新增规格选项</el-button>
@@ -68,21 +68,21 @@
           <el-col :span="4">操作</el-col>
         </el-row>
         <div style="max-height: 200px;overflow-y: auto;">
-          <el-row v-for="(item,index) of currentSpecData.option" :key="index">
+          <el-row v-for="(item,index) of currentSpecData.options" :key="index">
             <el-col :span="10" style="padding: 5px;">
-              <input v-model="item.option_name" placeholder="规格选项"></input>
+              <input v-model="item.optionName" placeholder="规格选项"></input>
             </el-col>
             <el-col :span="10" style="padding: 5px;">
               <input v-model="item.orders" placeholder="排序"></input>
             </el-col>
             <el-col :span="4" style="padding: 5px;">
-              <el-button size="mini" @click="handleOptionDelete">删除</el-button>
+              <el-button size="mini" @click="handleOptionDelete(index)">删除</el-button>
             </el-col>
           </el-row>
         </div>
         <el-divider></el-divider>
         <el-row type="flex" justify="end">
-          <el-button type="success" @click="optionSave">保存</el-button>
+          <el-button type="success" @click="saveOrUpdate">保存</el-button>
           <el-button @click="createDialogVis=false">关闭</el-button>
         </el-row>
       </div>
@@ -135,7 +135,7 @@
           .then(response => {
             var ret = response.data;
             if (ret.flag) {
-              this.currentSpecData['option'] = ret.data;
+              this.currentSpecData.options = ret.data;
               this.createDialogVis = true;
             } else {
               this.$message.error(ret.message);
@@ -168,11 +168,11 @@
         this.loadOptionData();
       },
       handleCreate() {
-        this.currentSpecData = {};
+        this.currentSpecData = {options: []};
         this.createDialogVis = true;
       },
       handleDelete() {
-        specificationApi.deleteByIds(this.selectSpecId)
+        specificationApi.deleteAll(this.selectSpecId)
           .then(response => {
             var ret = response.data;
             if (ret.flag) {
@@ -186,54 +186,79 @@
             console.log(error);
           })
       },
-      handleOptionDelete(index, row) {
-        specificationOptionApi.deleteById(row.id)
-          .then(response => {
-            var ret = response.data;
-            if (ret.flag) {
-              this.currentSpecData['option'] = ret.data;
-              this.$message({message: ret.message, type: 'success'})
-            } else {
-              this.$message.error(ret.message);
-            }
-          })
-          .catch(error => {
-            console.log(error);
-          })
+      handleRefresh() {
+        this.loadData();
+      },
+      handleOptionDelete(index) {
+        this.currentSpecData.options.splice(index, 1);
       },
       handlOptionAdd() {
-        console.log(this.currentSpecData.option.length);
-        this.currentSpecData.option.push({option_name: '', orders: ''});
-        console.log(this.currentSpecData.option.length);
+        this.currentSpecData.options.push({optionName: '', orders: ''});
         this.$forceUpdate();
       },
-      optionSave() {//保存规格选项，多个选项，有可能没有序号，ID，服务端判断处理
-        //名称不能为空
-        if (this.currentSpecData.option === undefined || this.currentSpecData.option == null) {
+      saveOrUpdate() {
+        //规格名称不能为空
+        var specName = this.currentSpecData.specName;
+        if (specName == undefined || specName == null || specName.length == 0) {
+          this.$message.error("规格名称不能为空");
           return;
         }
-        for (let i = 0; i < this.currentSpecData.option.length; i++) {
-          var name = this.currentSpecData.option[i].option_name;
-          if (name == undefined || name == null || name.length == 0) {
-            this.$message.error("规格选项不能为空");
-            return;
+        //自动补全序号
+        var options = this.currentSpecData.options;
+        if (options != undefined || options != null) {
+          var noOrderArr = [];
+          var maxOrder = 0;
+          for (let i = 0; i < options.length; i++) {
+            var orderNo = options[i].orders;
+            if (orderNo == undefined || orderNo == null || orderNo.length <= 0) {
+              noOrderArr.push(options[i]);
+            } else {
+              if (orderNo > maxOrder) {
+                maxOrder = orderNo;
+              }
+            }
+          }
+          for (let i = 0; i < noOrderArr.length; i++) {
+            maxOrder++;
+            noOrderArr[i].orders = maxOrder;
           }
         }
-        specificationOptionApi.saveAll(this.currentSpecData)
-          .then(response => {
-            var ret = response.data;
-            if (ret.flag) {
+        //根据是否有ID判断是新增还是更新
+        var id = this.currentSpecData.id;
+        if (id == undefined || id == null || id.length == 0) {
+          specificationApi.saveAll(this.currentSpecData)
+            .then(response => {
+              var ret = response.data;
+              if (ret.flag) {
+                this.createDialogVis = false;
+                this.$message({message: ret.message, type: 'success'})
+                this.loadData();
+              } else {
+                this.$message.error(ret.message);
+              }
+            })
+            .catch(error => {
               this.createDialogVis = false;
-              this.$message({message: ret.message, type: 'success'})
-            } else {
-              this.$message.error(ret.message);
-            }
-          })
-          .catch(error => {
-            this.createDialogVis = false;
-            console.log(error);
-          })
-      }
+              this.$message.error(error);
+            })
+        } else {
+          specificationApi.updateAll(id, this.currentSpecData)
+            .then(response => {
+              var ret = response.data;
+              if (ret.flag) {
+                this.createDialogVis = false;
+                this.$message({message: ret.message, type: 'success'})
+                this.loadData();
+              } else {
+                this.$message.error(ret.message);
+              }
+            })
+            .catch(error => {
+              this.createDialogVis = false;
+              this.$message.error(error);
+            })
+        }
+      },
     }
   }
 </script>

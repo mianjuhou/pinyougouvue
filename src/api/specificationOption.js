@@ -58,7 +58,7 @@ export default {
     var noOrderArr = [];
     var maxOrder = 0;
     for (let i = 0; i < options.length; i++) {
-      options[i]['spec_id'] = specId;
+      options[i].specId = specId;
       var orderNo = options[i].orders;
       if (orderNo == undefined || orderNo == null || orderNo.length <= 0) {
         noOrderArr.push(options[i]);
@@ -79,11 +79,4 @@ export default {
       data: options
     })
   },
-  deleteByIds(ids) {//根据多个ID删除数据
-    return request({
-      url: `/${group_name}/ids`,
-      method: 'delete',
-      data: ids
-    })
-  }
 }

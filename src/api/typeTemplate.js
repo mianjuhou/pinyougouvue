@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-const group_name = 'specification'
+const group_name = 'typeTemplate';
 export default {
   save(pojo) {
     return request({
