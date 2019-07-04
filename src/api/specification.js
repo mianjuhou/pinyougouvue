@@ -34,6 +34,16 @@ export default {
       method: 'get'
     })
   },
+  findSearch(pojo) {
+    if (pojo == undefined) {
+      pojo = {};
+    }
+    return request({
+      url: `/${group_name}/search`,
+      method: 'post',
+      data: pojo
+    })
+  },
   findPage(pageSize, pageNum, pojo) {
     if (pojo == undefined) {
       pojo = {};

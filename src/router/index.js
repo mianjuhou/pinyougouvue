@@ -7,15 +7,22 @@ import Specification from "@/components/Specification";
 import TypeTemplate from "@/components/TypeTemplate";
 import ItemCat from "@/components/ItemCat";
 import GoodsEdit from "@/components/GoodsEdit";
+import Goods from "@/components/Goods";
+import FirstView from "@/components/FirstView";
 
 Vue.use(Router)
 
 export default new Router({
   routes: [
     {
-      path: '/',
+      path: '/helloworld',
       name: 'HelloWorld',
       component: HelloWorld
+    },
+    {
+      path: '/',
+      name: 'FirstView',
+      component: FirstView
     },
     {
       path: '/mybrand',
@@ -46,6 +53,11 @@ export default new Router({
       path: '/goodsedit',
       name: 'GoodsEdit',
       component: GoodsEdit
+    },
+    {
+      path: '/goods',
+      name: 'Goods',
+      component: Goods
     },
   ]
 })
